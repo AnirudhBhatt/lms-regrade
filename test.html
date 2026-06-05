@@ -1,0 +1,508 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>ReGrade — Automated Unit Tests</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+  <style>
+    :root {
+      --bg: #0f172a;
+      --card: #1e293b;
+      --text: #f8fafc;
+      --text-muted: #94a3b8;
+      --success: #10b981;
+      --error: #ef4444;
+      --border: #334155;
+      --font-family: 'Inter', -apple-system, BlinkMacSystemFont, sans-serif;
+    }
+    body {
+      font-family: var(--font-family);
+      background-color: var(--bg);
+      color: var(--text);
+      margin: 0;
+      padding: 40px 20px;
+      line-height: 1.5;
+    }
+    .container {
+      max-width: 800px;
+      margin: 0 auto;
+    }
+    header {
+      margin-bottom: 30px;
+      border-bottom: 1px solid var(--border);
+      padding-bottom: 20px;
+    }
+    h1 {
+      font-size: 28px;
+      font-weight: 800;
+      margin: 0 0 8px 0;
+      letter-spacing: -0.5px;
+    }
+    .subtitle {
+      color: var(--text-muted);
+      margin: 0;
+    }
+    .summary-card {
+      background-color: var(--card);
+      border: 1px solid var(--border);
+      border-radius: 12px;
+      padding: 20px;
+      margin-bottom: 30px;
+      display: flex;
+      justify-content: space-around;
+      text-align: center;
+    }
+    .metric {
+      flex: 1;
+    }
+    .metric-value {
+      font-size: 36px;
+      font-weight: 800;
+      line-height: 1;
+      margin-bottom: 6px;
+    }
+    .metric-label {
+      font-size: 12px;
+      text-transform: uppercase;
+      letter-spacing: 0.05em;
+      color: var(--text-muted);
+    }
+    .status-pass { color: var(--success); }
+    .status-fail { color: var(--error); }
+    
+    .test-suite {
+      margin-bottom: 24px;
+    }
+    .suite-title {
+      font-size: 18px;
+      font-weight: 700;
+      margin-bottom: 12px;
+      border-left: 4px solid #6366f1;
+      padding-left: 10px;
+    }
+    .test-results {
+      background-color: var(--card);
+      border: 1px solid var(--border);
+      border-radius: 8px;
+      overflow: hidden;
+    }
+    .test-item {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      padding: 12px 20px;
+      border-bottom: 1px solid var(--border);
+      font-size: 14px;
+    }
+    .test-item:last-child {
+      border-bottom: none;
+    }
+    .test-name {
+      font-weight: 500;
+    }
+    .test-status {
+      font-weight: 700;
+      font-size: 12px;
+      padding: 2px 8px;
+      border-radius: 4px;
+      text-transform: uppercase;
+    }
+    .test-status.pass {
+      background-color: rgba(16, 185, 129, 0.15);
+      color: var(--success);
+    }
+    .test-status.fail {
+      background-color: rgba(239, 68, 68, 0.15);
+      color: var(--error);
+      margin-bottom: 4px;
+    }
+    .error-details {
+      font-family: monospace;
+      font-size: 12px;
+      color: #fda4af;
+      background: rgba(239, 68, 68, 0.08);
+      padding: 8px 16px;
+      border-radius: 4px;
+      margin-top: 6px;
+      width: 100%;
+      box-sizing: border-box;
+    }
+    .test-info {
+      display: flex;
+      flex-direction: column;
+      flex: 1;
+    }
+    .back-btn {
+      display: inline-block;
+      margin-top: 20px;
+      color: #6366f1;
+      text-decoration: none;
+      font-weight: 500;
+      font-size: 14px;
+    }
+    .back-btn:hover {
+      text-decoration: underline;
+    }
+  </style>
+
+  <!-- Load App logic scripts -->
+  <script src="js/store.js?v=5"></script>
+  <script src="js/auth.js?v=5"></script>
+  <script src="js/audit.js?v=5"></script>
+  <script src="js/notifications.js?v=5"></script>
+</head>
+<body>
+  <div class="container">
+    <header>
+      <h1>Automated Unit Tests</h1>
+      <p class="subtitle">Validating ReGrade LMS Regrading Workflow & Core Business Rules</p>
+    </header>
+
+    <div class="summary-card">
+      <div class="metric">
+        <div id="total-tests" class="metric-value">0</div>
+        <div class="metric-label">Total Tests</div>
+      </div>
+      <div class="metric">
+        <div id="passed-tests" class="metric-value status-pass">0</div>
+        <div class="metric-label">Passed</div>
+      </div>
+      <div class="metric">
+        <div id="failed-tests" class="metric-value status-fail">0</div>
+        <div class="metric-label">Failed</div>
+      </div>
+    </div>
+
+    <div id="suites-container"></div>
+    
+    <a href="index.html" class="back-btn">← Back to ReGrade App</a>
+  </div>
+
+  <script>
+    // Lightweight Testing Framework supporting async tests
+    (function() {
+      const suites = [];
+      let currentSuite = null;
+
+      window.describe = function(name, fn) {
+        currentSuite = { name, tests: [] };
+        suites.push(currentSuite);
+        fn();
+      };
+
+      window.it = function(name, fn) {
+        currentSuite.tests.push({ name, fn });
+      };
+
+      window.assert = {
+        ok: function(value, message) {
+          if (!value) throw new Error(message || `Expected truthy value but got: ${value}`);
+        },
+        equal: function(actual, expected, message) {
+          if (actual !== expected) throw new Error(message || `Expected: ${expected}, Got: ${actual}`);
+        },
+        throws: async function(fn, message) {
+          let threw = false;
+          try {
+            await fn();
+          } catch(e) {
+            threw = true;
+          }
+          if (!threw) throw new Error(message || "Expected function to throw an error");
+        }
+      };
+
+      // Define Unit Tests
+      describe("Database & Connection (Day 2)", function() {
+        it("should seed correct users including UPES emails", async function() {
+          const users = window.LMS.Store.getUsers();
+          assert.equal(users.length, 4, "Should seed exactly 4 users");
+          
+          const student = users.find(u => u.name === 'Anirudh Bhatt');
+          assert.ok(student, "Should seed student Anirudh Bhatt");
+          assert.equal(student.role, 'student', "Anirudh should have 'student' role");
+          assert.equal(student.email, 'anirudh@upes.edu', "Email should use UPES domain");
+
+          const instructor = users.find(u => u.name === 'Raygun Jose');
+          assert.ok(instructor, "Should seed instructor Raygun Jose");
+          assert.equal(instructor.role, 'instructor', "Raygun should have 'instructor' role");
+        });
+      });
+
+      describe("Authentication & Route Security (Day 1)", function() {
+        it("should allow a student to log in and mock session", async function() {
+          window.LMS.Auth.logout();
+          assert.equal(window.LMS.Auth.getCurrentUser(), null, "CurrentUser should be null after logout");
+          
+          const student = window.LMS.Store.getUsers().find(u => u.role === 'student');
+          const user = await window.LMS.Store.verifyCredentials(student.id, 'password123');
+          window.LMS.Auth.login(user.id);
+          assert.equal(window.LMS.Auth.getCurrentUser().name, student.name, "Active session should match logged-in user");
+        });
+      });
+
+      describe("Registration & Credentials Security", function() {
+        it("should register a new student user and auto-generate default grades", async function() {
+          const newUser = await window.LMS.Store.createUser({
+            id: 'u_test_student',
+            name: 'Test Student',
+            email: 'test_student@upes.edu',
+            password: 'mypassword',
+            role: 'student'
+          });
+          assert.equal(newUser.id, 'u_test_student', "User should be registered with correct ID");
+
+          await window.LMS.Store.preload(newUser);
+
+          const grades = window.LMS.Store.getGradesForStudent('u_test_student');
+          assert.ok(grades.length > 0, "Grades should be auto-populated for the registered student");
+        });
+
+        it("should prevent login with invalid credentials", async function() {
+          await assert.throws(async function() {
+            await window.LMS.Store.verifyCredentials('u_test_student', 'wrongpassword');
+          }, "Should reject incorrect password");
+        });
+      });
+
+      describe("Request Module & Validation Guards (Day 3 & 4)", function() {
+        it("should allow student to submit a valid regrade request", async function() {
+          const student = window.LMS.Store.getUsers().find(u => u.role === 'student');
+          window.LMS.Auth.login(student.id);
+
+          const assignments = window.LMS.Store.getAssignments();
+          const targetAsgn = assignments.find(a => a.id === 'a2'); // Use Final Project
+
+          // Submit request
+          const req = await window.LMS.Store.createRequest({
+            studentId: student.id,
+            assignmentId: targetAsgn.id,
+            originalGrade: 118,
+            claimedGrade: 125,
+            reason: 'calculation_error',
+            reasonDetail: 'Calculated total was 118, but should be 125 because question 4 score was omitted.',
+            evidenceType: 'text',
+            evidence: 'Calculated score sheet scan detail goes here'
+          });
+
+          // Log in audit trail
+          await window.LMS.Audit.logSubmission(req.id, student.id);
+
+          assert.ok(req.id, "Created request should have a generated ID");
+          assert.equal(req.status, 'Submitted', "Initial status must be 'Submitted'");
+          assert.equal(req.claimedGrade, 125, "Claimed grade should match input");
+          assert.equal(req.reopenCount, 0, "Initial reopen count must be 0");
+        });
+
+        it("should enforce duplicate request guard (prevent multiple active requests)", async function() {
+          const student = window.LMS.Store.getUsers().find(u => u.role === 'student');
+          window.LMS.Auth.login(student.id);
+          const assignments = window.LMS.Store.getAssignments();
+          const targetAsgn = assignments.find(a => a.id === 'a2');
+
+          // Try to submit another one
+          await assert.throws(async function() {
+            await window.LMS.Store.createRequest({
+              studentId: student.id,
+              assignmentId: targetAsgn.id,
+              originalGrade: 118,
+              claimedGrade: 130,
+              reason: 'calculation_error',
+              reasonDetail: 'Another explanation of at least thirty characters.',
+              evidenceType: 'text',
+              evidence: 'link'
+            });
+          }, "Should prevent creating a duplicate active request");
+        });
+      });
+
+      describe("Instructor Review & State Machine (Day 3 & 5)", function() {
+        it("should progress state to 'Under Review' upon opening queue item", async function() {
+          const instructor = window.LMS.Store.getUsers().find(u => u.role === 'instructor');
+          const student = window.LMS.Store.getUsers().find(u => u.role === 'student');
+          const assignments = window.LMS.Store.getAssignments();
+          const activeReq = window.LMS.Store.getActiveRequestForAssignment(student.id, assignments.find(a => a.id === 'a2').id);
+
+          assert.ok(activeReq, "Should locate active request");
+          
+          // Perform state transition
+          await window.LMS.Store.updateRequestStatus(activeReq.id, 'Under Review');
+          await window.LMS.Audit.logStatusChange(activeReq.id, instructor.id, 'instructor', 'Submitted', 'Under Review');
+
+          // Preload updated state
+          await window.LMS.Store.preload(instructor);
+
+          const updated = window.LMS.Store.getRequest(activeReq.id);
+          assert.equal(updated.status, 'Under Review', "Status should transition to 'Under Review'");
+        });
+
+        it("should log transitions in the audit trail", async function() {
+          const student = window.LMS.Store.getUsers().find(u => u.role === 'student');
+          const assignments = window.LMS.Store.getAssignments();
+          const activeReq = window.LMS.Store.getActiveRequestForAssignment(student.id, assignments.find(a => a.id === 'a2').id);
+
+          const logs = window.LMS.Audit.getForRequest(activeReq.id);
+          assert.ok(logs.length > 0, "Audit log should not be empty");
+          
+          const latestLog = logs[logs.length - 1];
+          assert.equal(latestLog.toState, 'Under Review', "Audit log should capture transition to 'Under Review'");
+        });
+
+        it("should process instructor decision and save justification", async function() {
+          const instructor = window.LMS.Store.getUsers().find(u => u.role === 'instructor');
+          const student = window.LMS.Store.getUsers().find(u => u.role === 'student');
+          const assignments = window.LMS.Store.getAssignments();
+          const activeReq = window.LMS.Store.getActiveRequestForAssignment(student.id, assignments.find(a => a.id === 'a2').id);
+
+          // Submit decision
+          await window.LMS.Store.submitDecision(
+            activeReq.id,
+            instructor.id,
+            'Accepted',
+            'Agreed. Corrected the addition error on Question 4.',
+            125
+          );
+          await window.LMS.Store.updateRequestStatus(activeReq.id, 'Accepted');
+          await window.LMS.Audit.logDecision(activeReq.id, instructor.id, 'Accepted', 125);
+
+          // Preload updated state
+          await window.LMS.Store.preload(student);
+
+          const resolvedReq = window.LMS.Store.getRequest(activeReq.id);
+          assert.equal(resolvedReq.status, 'Accepted', "Status should transition to 'Accepted'");
+          
+          const grade = window.LMS.Store.getGrade(student.id, assignments.find(a => a.id === 'a2').id);
+          assert.equal(grade.score, 125, "Final grade should be updated to 125 in the gradebook");
+        });
+      });
+
+      describe("Reopen Request Limits (Day 4 Edge Cases)", function() {
+        it("should allow request to be reopened exactly once from Rejected", async function() {
+          const student = window.LMS.Store.getUsers().find(u => u.id === 'u2');
+          // Let's use request 'rr2' which is currently 'Rejected' in the seeded database
+          const req = window.LMS.Store.getRequest('rr2');
+          assert.equal(req.status, 'Rejected', "Request rr2 should be in Rejected state");
+
+          // Reopen - pass req.studentId ('u2') who owns this request
+          await window.LMS.Store.reopenRequest(req.id, req.studentId);
+          await window.LMS.Audit.logReopen(req.id, req.studentId);
+
+          // Preload updated state
+          await window.LMS.Store.preload(student);
+
+          const reopened = window.LMS.Store.getRequest(req.id);
+          assert.equal(reopened.status, 'Submitted', "Status should reset to 'Submitted' on reopen");
+          assert.equal(reopened.reopenCount, 1, "Reopen count should increment to 1");
+        });
+
+        it("should prevent reopening more than once (1x limit guard)", async function() {
+          const instructor = window.LMS.Store.getUsers().find(u => u.role === 'instructor');
+          const student = window.LMS.Store.getUsers().find(u => u.id === 'u2');
+          const req = window.LMS.Store.getRequest('rr2');
+
+          // Resolve it again
+          await window.LMS.Store.submitDecision(
+            req.id,
+            instructor.id,
+            'Rejected',
+            'Checking for final decision after student reopen.',
+            null
+          );
+          await window.LMS.Store.updateRequestStatus(req.id, 'Rejected');
+          await window.LMS.Audit.logDecision(req.id, instructor.id, 'Rejected', null);
+
+          // Preload updated state
+          await window.LMS.Store.preload(student);
+
+          // Verify it is resolved
+          const resolved = window.LMS.Store.getRequest(req.id);
+          assert.equal(resolved.status, 'Rejected', "Request should be rejected/resolved again");
+          assert.equal(resolved.reopenCount, 1, "Reopen count should be 1");
+
+          // Attempt second reopen (should fail)
+          await assert.throws(async function() {
+            await window.LMS.Store.reopenRequest(req.id, req.studentId);
+          }, "Should prevent second reopen attempt");
+        });
+      });
+
+      // Run and render test results asynchronously
+      document.addEventListener('DOMContentLoaded', async function() {
+        // Reset and seed the backend DB before starting tests
+        try {
+          await window.LMS.Store.reset();
+        } catch(e) {
+          console.error("Test DB Reset Failed:", e);
+        }
+
+        const container = document.getElementById('suites-container');
+        let totalCount = 0;
+        let passedCount = 0;
+        let failedCount = 0;
+
+        for (const suite of suites) {
+          const suiteDiv = document.createElement('div');
+          suiteDiv.className = 'test-suite';
+          
+          const title = document.createElement('div');
+          title.className = 'suite-title';
+          title.textContent = suite.name;
+          suiteDiv.appendChild(title);
+          
+          const resultsDiv = document.createElement('div');
+          resultsDiv.className = 'test-results';
+          
+          for (const test of suite.tests) {
+            totalCount++;
+            const item = document.createElement('div');
+            item.className = 'test-item';
+            
+            const info = document.createElement('div');
+            info.className = 'test-info';
+            
+            const name = document.createElement('span');
+            name.className = 'test-name';
+            name.textContent = test.name;
+            info.appendChild(name);
+            
+            const statusBadge = document.createElement('span');
+            statusBadge.className = 'test-status';
+            
+            try {
+              await test.fn();
+              passedCount++;
+              statusBadge.textContent = 'Pass';
+              statusBadge.classList.add('pass');
+            } catch(e) {
+              failedCount++;
+              statusBadge.textContent = 'Fail';
+              statusBadge.classList.add('fail');
+              
+              const errDetails = document.createElement('div');
+              errDetails.className = 'error-details';
+              errDetails.textContent = e.stack || e.message;
+              info.appendChild(errDetails);
+            }
+            
+            item.appendChild(info);
+            item.appendChild(statusBadge);
+            resultsDiv.appendChild(item);
+          }
+          
+          suiteDiv.appendChild(resultsDiv);
+          container.appendChild(suiteDiv);
+        }
+
+        // Update dashboard metrics
+        document.getElementById('total-tests').textContent = totalCount;
+        document.getElementById('passed-tests').textContent = passedCount;
+        document.getElementById('failed-tests').textContent = failedCount;
+      });
+
+    })();
+  </script>
+</body>
+</html>

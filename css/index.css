@@ -1,0 +1,150 @@
+/* ═══════════════════════════════════════════════════════
+   ReGrade LMS — Design System Tokens & Base Styles
+   Day 1-2: State machine colors + typographic scale
+   ═══════════════════════════════════════════════════════ */
+
+:root {
+  /* ── Background ── */
+  --bg-primary:   #0d1238;
+  --bg-secondary: #20113c;
+  --bg-tertiary:  #162B40;
+  --bg-card:      rgba(255,255,255,0.04);
+  --bg-card-hover:rgba(255,255,255,0.07);
+  --bg-input:     rgba(255,255,255,0.06);
+  --bg-input-focus:rgba(255,255,255,0.09);
+  --bg-gradient:  linear-gradient(135deg, #0e1e82 0%, #571175 60%, #850f5f 100%);
+
+  /* ── Borders ── */
+  --border-subtle:  rgba(255,255,255,0.07);
+  --border-default: rgba(255,255,255,0.12);
+  --border-focus:   rgba(67,97,238,0.6);
+
+  /* ── Brand ── */
+  --blue:          #4361EE;
+  --blue-light:    #6B8BF5;
+  --blue-glow:     rgba(67,97,238,0.22);
+  --emerald:       #06D6A0;
+  --emerald-light: #33DEB0;
+  --emerald-glow:  rgba(6,214,160,0.18);
+  --coral:         #EF476F;
+  --coral-light:   #F36A8A;
+  --coral-glow:    rgba(239,71,111,0.18);
+  --amber:         #FFD166;
+  --amber-light:   #FFDA85;
+  --amber-glow:    rgba(255,209,102,0.18);
+  --purple:        #7B5EA7;
+  --purple-glow:   rgba(123,94,167,0.18);
+  --gray:          #64748B;
+  --gray-light:    #94A3B8;
+
+  /* ── Text ── */
+  --text-primary:   #F1F5F9;
+  --text-secondary: #94A3B8;
+  --text-muted:     #64748B;
+
+  /* ── Status (Day 1 — state machine colors) ── */
+  --status-submitted-color: var(--amber);
+  --status-submitted-bg:    var(--amber-glow);
+  --status-review-color:    var(--blue-light);
+  --status-review-bg:       var(--blue-glow);
+  --status-accepted-color:  var(--emerald);
+  --status-accepted-bg:     var(--emerald-glow);
+  --status-rejected-color:  var(--coral);
+  --status-rejected-bg:     var(--coral-glow);
+  --status-closed-color:    var(--gray-light);
+  --status-closed-bg:       rgba(100,116,139,0.18);
+
+  /* ── Spacing ── */
+  --space-xs:  4px;
+  --space-sm:  8px;
+  --space-md:  16px;
+  --space-lg:  24px;
+  --space-xl:  32px;
+  --space-2xl: 48px;
+  --space-3xl: 64px;
+
+  /* ── Radius ── */
+  --radius-sm:   6px;
+  --radius-md:   12px;
+  --radius-lg:   16px;
+  --radius-xl:   24px;
+  --radius-full: 9999px;
+
+  /* ── Shadows ── */
+  --shadow-sm:     0 1px 3px rgba(0,0,0,0.3);
+  --shadow-md:     0 4px 16px rgba(0,0,0,0.4);
+  --shadow-lg:     0 8px 32px rgba(0,0,0,0.55);
+  --shadow-blue:   0 0 24px rgba(67,97,238,0.3);
+  --shadow-emerald:0 0 24px rgba(6,214,160,0.3);
+
+  /* ── Typography ── */
+  --font-family: 'Inter', -apple-system, BlinkMacSystemFont, sans-serif;
+  --text-xs:   11px;
+  --text-sm:   13px;
+  --text-base: 15px;
+  --text-md:   16px;
+  --text-lg:   18px;
+  --text-xl:   22px;
+  --text-2xl:  28px;
+  --text-3xl:  36px;
+
+  /* ── Transitions ── */
+  --t-fast: 0.15s ease;
+  --t-base: 0.25s ease;
+  --t-slow: 0.4s ease;
+
+  /* ── Layout ── */
+  --sidebar-width:  260px;
+  --topbar-height:  64px;
+}
+
+/* ── Reset ── */
+*, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+html { scroll-behavior: smooth; }
+
+body {
+  font-family: var(--font-family);
+  font-size: var(--text-base);
+  color: var(--text-primary);
+  background: var(--bg-gradient);
+  background-attachment: fixed;
+  min-height: 100vh;
+  line-height: 1.6;
+  -webkit-font-smoothing: antialiased;
+  overflow-x: hidden;
+}
+
+/* ── Scrollbar ── */
+::-webkit-scrollbar { width: 5px; height: 5px; }
+::-webkit-scrollbar-track { background: transparent; }
+::-webkit-scrollbar-thumb { background: var(--border-default); border-radius: 3px; }
+::-webkit-scrollbar-thumb:hover { background: var(--gray); }
+
+/* ── Selection ── */
+::selection { background: var(--blue-glow); color: var(--text-primary); }
+
+a { color: var(--blue-light); text-decoration: none; transition: color var(--t-fast); }
+a:hover { color: #fff; }
+
+/* ── Utilities ── */
+.hidden    { display: none !important; }
+.w-full    { width: 100%; }
+.flex      { display: flex; }
+.flex-col  { flex-direction: column; }
+.items-center  { align-items: center; }
+.justify-between { justify-content: space-between; }
+.gap-sm    { gap: var(--space-sm); }
+.gap-md    { gap: var(--space-md); }
+.gap-lg    { gap: var(--space-lg); }
+.mt-sm     { margin-top: var(--space-sm); }
+.mt-md     { margin-top: var(--space-md); }
+.mt-lg     { margin-top: var(--space-lg); }
+.mb-md     { margin-bottom: var(--space-md); }
+.text-muted     { color: var(--text-muted); }
+.text-secondary { color: var(--text-secondary); }
+.text-sm   { font-size: var(--text-sm); }
+.text-xs   { font-size: var(--text-xs); }
+.font-medium  { font-weight: 500; }
+.font-semibold{ font-weight: 600; }
+.font-bold    { font-weight: 700; }
+.truncate  { overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }

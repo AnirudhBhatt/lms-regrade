@@ -1,0 +1,886 @@
+{
+  "info": {
+    "_postman_id": "8b08fa11-46e3-4d7a-af0f-db6a978f6a9e",
+    "name": "ReGrade LMS API Collection",
+    "description": "Complete API collection for testing and verifying the ReGrade LMS Regrading Request workflow endpoints. Includes authentication, registration, assignment ownership, regrade requests, decisions, audit logs, and notifications.\n\n**MongoDB Connection:** mongodb://127.0.0.1:27017/regrade_lms\n**Backend Server:** http://localhost:5001\n**Frontend Server:** http://localhost:3456\n\n**Default Credentials:**\n- All seeded users: password123\n- u1: Anirudh Bhatt (student)\n- u2: Himanshu Kadyan (student)\n- u3: Yashasvi Dutt Sharma (student)\n- u4: Raygun Jose (instructor)",
+    "schema": "https://schema.getpostman.com/json/collection/v2.1.0/collection.json"
+  },
+  "item": [
+    {
+      "name": "System",
+      "item": [
+        {
+          "name": "Reset and Seed Database",
+          "request": {
+            "method": "POST",
+            "header": [],
+            "url": {
+              "raw": "http://localhost:5001/api/reset",
+              "protocol": "http",
+              "host": [
+                "localhost"
+              ],
+              "port": "5001",
+              "path": [
+                "api",
+                "reset"
+              ]
+            },
+            "description": "Clears all collections in the MongoDB database and re-seeds them with initial sample data (4 users, 3 assignments, 9 grades, 5 requests, 3 decisions, 13 audit logs, and 5 notifications). Use this before running test flows."
+          },
+          "response": []
+        }
+      ]
+    },
+    {
+      "name": "Authentication",
+      "description": "User registration and login endpoints. Supports both password-based login and Google OAuth bypass.",
+      "item": [
+        {
+          "name": "Register New Student",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"id\": \"u10\",\n  \"name\": \"New Student\",\n  \"email\": \"newstudent@upes.edu\",\n  \"password\": \"mypassword123\",\n  \"role\": \"student\"\n}"
+            },
+            "url": {
+              "raw": "http://localhost:5001/api/users",
+              "protocol": "http",
+              "host": [
+                "localhost"
+              ],
+              "port": "5001",
+              "path": [
+                "api",
+                "users"
+              ]
+            },
+            "description": "Registers a new student in the LMS. When a student is registered, the system automatically generates default Grade records (70% of maxScore) for ALL existing assignments, allowing them to immediately view grades and submit regrade requests.\n\n**Validation:**\n- ID and Email must be unique (returns 400 if duplicate)\n- All fields are required\n\n**Auto-population:** Creates grade entries for every assignment in the database."
+          },
+          "response": []
+        },
+        {
+          "name": "Register New Instructor",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"id\": \"inst2\",\n  \"name\": \"New Instructor\",\n  \"email\": \"newinstructor@upes.edu\",\n  \"password\": \"securepass456\",\n  \"role\": \"instructor\"\n}"
+            },
+            "url": {
+              "raw": "http://localhost:5001/api/users",
+              "protocol": "http",
+              "host": [
+                "localhost"
+              ],
+              "port": "5001",
+              "path": [
+                "api",
+                "users"
+              ]
+            },
+            "description": "Registers a new instructor in the LMS. Instructors can create assignments, review regrade requests for their own assignments, and submit decisions.\n\n**Note:** Unlike students, no grades are auto-populated for instructors."
+          },
+          "response": []
+        },
+        {
+          "name": "Login with Password",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"loginId\": \"u1\",\n  \"password\": \"password123\"\n}"
+            },
+            "url": {
+              "raw": "http://localhost:5001/api/users/login",
+              "protocol": "http",
+              "host": [
+                "localhost"
+              ],
+              "port": "5001",
+              "path": [
+                "api",
+                "users",
+                "login"
+              ]
+            },
+            "description": "Authenticates a user with their User ID (or Email) and password. Returns the full user object on success.\n\n**loginId** accepts either the user's unique ID (e.g. 'u1') or their email (e.g. 'anirudh@upes.edu').\n\n**Default password for all seeded users:** password123\n\n**Returns:**\n- 200: User object (id, name, role, email, avatar)\n- 401: Invalid user ID/Email or Incorrect password"
+          },
+          "response": []
+        },
+        {
+          "name": "Login with Password (Wrong - Should Fail)",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"loginId\": \"u1\",\n  \"password\": \"wrongpassword\"\n}"
+            },
+            "url": {
+              "raw": "http://localhost:5001/api/users/login",
+              "protocol": "http",
+              "host": [
+                "localhost"
+              ],
+              "port": "5001",
+              "path": [
+                "api",
+                "users",
+                "login"
+              ]
+            },
+            "description": "Tests that incorrect passwords are rejected. Expected response: 401 with error 'Incorrect password.'"
+          },
+          "response": []
+        },
+        {
+          "name": "Login via Google OAuth (Bypass)",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"loginId\": \"anirudh@upes.edu\",\n  \"isGoogle\": true\n}"
+            },
+            "url": {
+              "raw": "http://localhost:5001/api/users/login",
+              "protocol": "http",
+              "host": [
+                "localhost"
+              ],
+              "port": "5001",
+              "path": [
+                "api",
+                "users",
+                "login"
+              ]
+            },
+            "description": "Simulates Google OAuth authentication. When isGoogle is true, the password field is ignored and the user is authenticated by email/ID alone. This is used by the frontend's 'Continue with Google' flow.\n\n**Note:** The password field can be omitted or null when isGoogle is true."
+          },
+          "response": []
+        },
+        {
+          "name": "Login by Email (Alternative)",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"loginId\": \"raygun.jose@upes.edu\",\n  \"password\": \"password123\"\n}"
+            },
+            "url": {
+              "raw": "http://localhost:5001/api/users/login",
+              "protocol": "http",
+              "host": [
+                "localhost"
+              ],
+              "port": "5001",
+              "path": [
+                "api",
+                "users",
+                "login"
+              ]
+            },
+            "description": "Demonstrates that loginId also accepts email addresses (not just user IDs). This logs in as instructor Raygun Jose using their email."
+          },
+          "response": []
+        }
+      ]
+    },
+    {
+      "name": "Users",
+      "item": [
+        {
+          "name": "Get All Users",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "http://localhost:5001/api/users",
+              "protocol": "http",
+              "host": [
+                "localhost"
+              ],
+              "port": "5001",
+              "path": [
+                "api",
+                "users"
+              ]
+            },
+            "description": "Retrieves the complete list of users (students and instructors) registered in the LMS system. Each user object includes: id, name, role, email, avatar, and password."
+          },
+          "response": []
+        },
+        {
+          "name": "Get User by ID",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "http://localhost:5001/api/users/:id",
+              "protocol": "http",
+              "host": [
+                "localhost"
+              ],
+              "port": "5001",
+              "path": [
+                "api",
+                "users",
+                ":id"
+              ],
+              "variable": [
+                {
+                  "key": "id",
+                  "value": "u1",
+                  "description": "The unique ID of the user (e.g. u1 for student, u4 for instructor)"
+                }
+              ]
+            },
+            "description": "Retrieves the profile of a specific user by their unique ID."
+          },
+          "response": []
+        }
+      ]
+    },
+    {
+      "name": "Assignments",
+      "description": "Assignment CRUD. Each assignment has an instructorId field that determines which instructor owns it and can review its regrade requests.",
+      "item": [
+        {
+          "name": "Get All Assignments",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "http://localhost:5001/api/assignments",
+              "protocol": "http",
+              "host": [
+                "localhost"
+              ],
+              "port": "5001",
+              "path": [
+                "api",
+                "assignments"
+              ]
+            },
+            "description": "Retrieves the complete list of published assignments. Each assignment includes its instructorId showing which instructor owns it.\n\n**Seeded assignments (all owned by u4 — Raygun Jose):**\n- a1: Midterm Exam (CS301, 100 pts)\n- a2: Final Project (CS301, 150 pts)\n- a3: Lab Report 3 (CS301, 50 pts)"
+          },
+          "response": []
+        },
+        {
+          "name": "Create Assignment (Instructor)",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"title\": \"Lab Report 5\",\n  \"description\": \"AVL tree balanced rotations implementation and analysis\",\n  \"maxScore\": 100,\n  \"course\": \"CS301 — Data Structures\",\n  \"instructorId\": \"u4\"\n}"
+            },
+            "url": {
+              "raw": "http://localhost:5001/api/assignments",
+              "protocol": "http",
+              "host": [
+                "localhost"
+              ],
+              "port": "5001",
+              "path": [
+                "api",
+                "assignments"
+              ]
+            },
+            "description": "Creates a new assignment owned by the specified instructor. Automatically generates Grade records (80% of maxScore) for ALL registered students in the database.\n\n**instructorId** determines who owns this assignment and who can see regrade requests for it.\n\n**Auto-population:** Creates grade entries for every student user."
+          },
+          "response": []
+        }
+      ]
+    },
+    {
+      "name": "Grades",
+      "item": [
+        {
+          "name": "Get Student Grades",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "http://localhost:5001/api/grades/:studentId",
+              "protocol": "http",
+              "host": [
+                "localhost"
+              ],
+              "port": "5001",
+              "path": [
+                "api",
+                "grades",
+                ":studentId"
+              ],
+              "variable": [
+                {
+                  "key": "studentId",
+                  "value": "u1",
+                  "description": "The student ID to fetch grades for"
+                }
+              ]
+            },
+            "description": "Fetches the gradebook records for a specific student, showing scores and maximum scores for each assignment."
+          },
+          "response": []
+        }
+      ]
+    },
+    {
+      "name": "Regrade Requests",
+      "item": [
+        {
+          "name": "Get All Requests",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "http://localhost:5001/api/requests",
+              "protocol": "http",
+              "host": [
+                "localhost"
+              ],
+              "port": "5001",
+              "path": [
+                "api",
+                "requests"
+              ]
+            },
+            "description": "Retrieves all regrade requests, ordered by submission time (most recent first)."
+          },
+          "response": []
+        },
+        {
+          "name": "Get Requests Filtered by Status",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "http://localhost:5001/api/requests?status=Submitted",
+              "protocol": "http",
+              "host": [
+                "localhost"
+              ],
+              "port": "5001",
+              "path": [
+                "api",
+                "requests"
+              ],
+              "query": [
+                {
+                  "key": "status",
+                  "value": "Submitted",
+                  "description": "Status to filter requests (Submitted, Under Review, Accepted, Rejected, Closed)"
+                }
+              ]
+            },
+            "description": "Retrieves all regrade requests filtered by their current workflow status."
+          },
+          "response": []
+        },
+        {
+          "name": "Get Request by ID",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "http://localhost:5001/api/requests/:id",
+              "protocol": "http",
+              "host": [
+                "localhost"
+              ],
+              "port": "5001",
+              "path": [
+                "api",
+                "requests",
+                ":id"
+              ],
+              "variable": [
+                {
+                  "key": "id",
+                  "value": "rr4",
+                  "description": "The unique ID of the regrade request"
+                }
+              ]
+            },
+            "description": "Retrieves detailed information about a single regrade request."
+          },
+          "response": []
+        },
+        {
+          "name": "Submit Regrade Request",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"studentId\": \"u1\",\n  \"assignmentId\": \"a2\",\n  \"originalGrade\": 118,\n  \"claimedGrade\": 125,\n  \"reason\": \"grading_error\",\n  \"reasonDetail\": \"Task 3 rubric says 10 points for correct time complexity analysis, but I got 3 points despite giving the correct O(E log V) derivation.\",\n  \"evidenceType\": \"text\",\n  \"evidence\": \"On line 42 of my project code, the Dijkstra implementation uses a min-priority queue which guarantees O(E log V) complexity.\"\n}"
+            },
+            "url": {
+              "raw": "http://localhost:5001/api/requests",
+              "protocol": "http",
+              "host": [
+                "localhost"
+              ],
+              "port": "5001",
+              "path": [
+                "api",
+                "requests"
+              ]
+            },
+            "description": "Submits a new regrade request. Employs a guard check to prevent creating duplicate active requests for the same assignment.\n\n**Duplicate Guard:** If a non-Closed request already exists for this student + assignment combo, returns 400."
+          },
+          "response": []
+        },
+        {
+          "name": "Update Request Status",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"status\": \"Under Review\",\n  \"actorId\": \"u4\",\n  \"actorRole\": \"instructor\"\n}"
+            },
+            "url": {
+              "raw": "http://localhost:5001/api/requests/:id/status",
+              "protocol": "http",
+              "host": [
+                "localhost"
+              ],
+              "port": "5001",
+              "path": [
+                "api",
+                "requests",
+                ":id",
+                "status"
+              ],
+              "variable": [
+                {
+                  "key": "id",
+                  "value": "rr4",
+                  "description": "The unique ID of the request to update"
+                }
+              ]
+            },
+            "description": "Updates the status of an existing regrade request (e.g. to 'Under Review') and logs a workflow transition in the audit log."
+          },
+          "response": []
+        },
+        {
+          "name": "Reopen Request (Student)",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"studentId\": \"u2\"\n}"
+            },
+            "url": {
+              "raw": "http://localhost:5001/api/requests/:id/reopen",
+              "protocol": "http",
+              "host": [
+                "localhost"
+              ],
+              "port": "5001",
+              "path": [
+                "api",
+                "requests",
+                ":id",
+                "reopen"
+              ],
+              "variable": [
+                {
+                  "key": "id",
+                  "value": "rr2",
+                  "description": "The unique ID of the rejected request to reopen"
+                }
+              ]
+            },
+            "description": "Reopens a previously Rejected request. Enforces a strict 1-time reopen limit per request and logs the reopening in the audit log.\n\n**Guards:**\n- Only the owning student can reopen\n- Only Rejected requests can be reopened\n- Maximum 1 reopen per request"
+          },
+          "response": []
+        }
+      ]
+    },
+    {
+      "name": "Decisions",
+      "item": [
+        {
+          "name": "Get All Decisions",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "http://localhost:5001/api/decisions",
+              "protocol": "http",
+              "host": [
+                "localhost"
+              ],
+              "port": "5001",
+              "path": [
+                "api",
+                "decisions"
+              ]
+            },
+            "description": "Retrieves all instructor decisions across all regrade requests."
+          },
+          "response": []
+        },
+        {
+          "name": "Get Decisions for Request",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "http://localhost:5001/api/decisions?requestId=rr1",
+              "protocol": "http",
+              "host": [
+                "localhost"
+              ],
+              "port": "5001",
+              "path": [
+                "api",
+                "decisions"
+              ],
+              "query": [
+                {
+                  "key": "requestId",
+                  "value": "rr1",
+                  "description": "Request ID to filter decisions for"
+                }
+              ]
+            },
+            "description": "Retrieves the decision(s) made for a specific regrade request."
+          },
+          "response": []
+        },
+        {
+          "name": "Submit Instructor Decision (Accept)",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"requestId\": \"rr4\",\n  \"instructorId\": \"u4\",\n  \"decision\": \"Accepted\",\n  \"justification\": \"After reviewing the student's BST implementation, the null-pointer edge case is handled correctly on line 28. The autograder test configuration issue has been confirmed. Grade revised accordingly.\",\n  \"revisedGrade\": 45\n}"
+            },
+            "url": {
+              "raw": "http://localhost:5001/api/decisions",
+              "protocol": "http",
+              "host": [
+                "localhost"
+              ],
+              "port": "5001",
+              "path": [
+                "api",
+                "decisions"
+              ]
+            },
+            "description": "Submits an Accept decision. This updates the request status to 'Accepted', saves the decision details with justification, updates the student's gradebook score to the revisedGrade, and logs the event in the audit trail.\n\n**Justification:** Must be at least 20 characters."
+          },
+          "response": []
+        },
+        {
+          "name": "Submit Instructor Decision (Reject)",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"requestId\": \"rr3\",\n  \"instructorId\": \"u4\",\n  \"decision\": \"Rejected\",\n  \"justification\": \"After careful review, the bonus section rubric was applied correctly. The memoization approach described does not fully satisfy the optimization criteria outlined in the marking guide.\"\n}"
+            },
+            "url": {
+              "raw": "http://localhost:5001/api/decisions",
+              "protocol": "http",
+              "host": [
+                "localhost"
+              ],
+              "port": "5001",
+              "path": [
+                "api",
+                "decisions"
+              ]
+            },
+            "description": "Submits a Reject decision. The student's grade is NOT modified. The student may reopen this request once.\n\n**Justification:** Must be at least 20 characters."
+          },
+          "response": []
+        }
+      ]
+    },
+    {
+      "name": "Audit Logs",
+      "item": [
+        {
+          "name": "Get Complete Audit Log",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "http://localhost:5001/api/audit",
+              "protocol": "http",
+              "host": [
+                "localhost"
+              ],
+              "port": "5001",
+              "path": [
+                "api",
+                "audit"
+              ]
+            },
+            "description": "Retrieves the complete immutable audit trail of status updates, submissions, decisions, and reopening events."
+          },
+          "response": []
+        },
+        {
+          "name": "Get Request Audit History",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "http://localhost:5001/api/audit?requestId=rr1",
+              "protocol": "http",
+              "host": [
+                "localhost"
+              ],
+              "port": "5001",
+              "path": [
+                "api",
+                "audit"
+              ],
+              "query": [
+                {
+                  "key": "requestId",
+                  "value": "rr1",
+                  "description": "Request ID to filter history"
+                }
+              ]
+            },
+            "description": "Retrieves the audit log history for a specific regrade request, showing the full lifecycle: SUBMITTED → STATUS_CHANGED → DECISION_MADE → REOPENED → CLOSED."
+          },
+          "response": []
+        },
+        {
+          "name": "Create Manual Audit Entry",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"requestId\": \"rr4\",\n  \"actorId\": \"u1\",\n  \"actorRole\": \"student\",\n  \"action\": \"SUBMITTED\",\n  \"fromState\": null,\n  \"toState\": \"Submitted\",\n  \"metadata\": {}\n}"
+            },
+            "url": {
+              "raw": "http://localhost:5001/api/audit",
+              "protocol": "http",
+              "host": [
+                "localhost"
+              ],
+              "port": "5001",
+              "path": [
+                "api",
+                "audit"
+              ]
+            },
+            "description": "Manually creates an audit log entry. Primarily used by the frontend to log SUBMITTED and REOPENED events."
+          },
+          "response": []
+        }
+      ]
+    },
+    {
+      "name": "Notifications",
+      "item": [
+        {
+          "name": "Get User Notifications",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "http://localhost:5001/api/notifications/:userId",
+              "protocol": "http",
+              "host": [
+                "localhost"
+              ],
+              "port": "5001",
+              "path": [
+                "api",
+                "notifications",
+                ":userId"
+              ],
+              "variable": [
+                {
+                  "key": "userId",
+                  "value": "u4",
+                  "description": "User ID to fetch notifications for (try u4 for instructor notifications)"
+                }
+              ]
+            },
+            "description": "Retrieves all notifications for a specific user, sorted from newest to oldest. Notifications are targeted: regrade requests only notify the specific instructor who owns that assignment."
+          },
+          "response": []
+        },
+        {
+          "name": "Create Notification",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"userId\": \"u1\",\n  \"type\": \"info\",\n  \"message\": \"Your request is now being processed.\",\n  \"requestId\": \"rr4\"\n}"
+            },
+            "url": {
+              "raw": "http://localhost:5001/api/notifications",
+              "protocol": "http",
+              "host": [
+                "localhost"
+              ],
+              "port": "5001",
+              "path": [
+                "api",
+                "notifications"
+              ]
+            },
+            "description": "Creates a new in-app notification for a specific user. Types: info, success, warning, error."
+          },
+          "response": []
+        },
+        {
+          "name": "Mark Notification as Read",
+          "request": {
+            "method": "POST",
+            "header": [],
+            "url": {
+              "raw": "http://localhost:5001/api/notifications/:id/read",
+              "protocol": "http",
+              "host": [
+                "localhost"
+              ],
+              "port": "5001",
+              "path": [
+                "api",
+                "notifications",
+                ":id",
+                "read"
+              ],
+              "variable": [
+                {
+                  "key": "id",
+                  "value": "not_1",
+                  "description": "The unique ID of the notification to mark read"
+                }
+              ]
+            },
+            "description": "Marks a specific notification as read."
+          },
+          "response": []
+        },
+        {
+          "name": "Mark All Notifications as Read",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"userId\": \"u1\"\n}"
+            },
+            "url": {
+              "raw": "http://localhost:5001/api/notifications/read-all",
+              "protocol": "http",
+              "host": [
+                "localhost"
+              ],
+              "port": "5001",
+              "path": [
+                "api",
+                "notifications",
+                "read-all"
+              ]
+            },
+            "description": "Marks all notifications for a specific user as read."
+          },
+          "response": []
+        }
+      ]
+    }
+  ]
+}

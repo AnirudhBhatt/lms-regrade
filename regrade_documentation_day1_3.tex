@@ -1,0 +1,350 @@
+\documentclass{article}
+\usepackage[utf8]{inputenc}
+\usepackage{hyperref}
+\usepackage{booktabs}
+\usepackage{longtable}
+\usepackage{array}
+\usepackage{fancyvrb}
+\usepackage{xcolor}
+\usepackage{listings}
+\usepackage{geometry}
+\usepackage{graphicx}
+
+\geometry{margin=1in}
+
+% Code highlighting styling
+\lstset{
+  basicstyle=\ttfamily\small,
+  breaklines=true,
+  backgroundcolor=\color{gray!10},
+  frame=single,
+  rulecolor=\color{gray!30},
+  xleftmargin=10pt,
+  xrightmargin=10pt,
+  showstringspaces=false
+}
+
+\title{\textbf{ReGrade --- Comprehensive LMS Regrading Request System} \\ Technical Architecture \& Specifications}
+\author{UPES Development Team}
+\date{June 4, 2026}
+
+\begin{document}
+
+\maketitle
+
+\tableofcontents
+\newpage
+
+\section{Executive Summary \& Project Goals}
+
+ReGrade is a lightweight, pure client-side Single Page Application (SPA) designed to handle grade disputes systematically. In academic institutions like \textbf{UPES (University of Tomorrow)}, grade disputes are often handled over unstructured, non-auditable channels like emails or direct messages. This leads to missing context, lack of accountability, and grading stress for both students and instructors.
+
+ReGrade addresses this by replacing chaotic communications with a structured, state-governed, and auditable regrading workflow.
+
+\subsection{Architectural Philosophy}
+ReGrade is built entirely as a **client-side Single Page Application**. 
+\begin{itemize}
+    \item \textbf{Zero Server Dependency}: The application runs directly inside any modern web browser.
+    \item \textbf{Offline Capability}: It can be executed directly from the local file system (using the \texttt{file://} protocol) without requiring CORS-configured server execution.
+    \item \textbf{Local Persistence}: State is stored inside browser \texttt{localStorage} to simulate a persistent database, and session state resides in \texttt{sessionStorage}.
+\end{itemize}
+
+\begin{center}\rule{0.5\linewidth}{0.5pt}\end{center}
+
+\section{Technology Stack \& Technical Rationale}
+
+\subsection{Frontend Architecture}
+The system is composed of standard web technologies without external frameworks or compilation steps:
+
+\subsubsection{1. HTML5 (App Shell)}
+The file \texttt{index.html} acts as the core application shell. It imports stylesheets and scripts, and sets up the structural layout:
+\begin{itemize}
+    \item \textbf{Sidebar Nav Container}: Renders a responsive sidebar displaying logo, role-based navigation tabs, and active user profile details.
+    \item \textbf{Main Page Target}: A single container element (\texttt{<main id="page-content">}) where Javascript views inject dynamic HTML based on active routes.
+    \item \textbf{Notification Drawer}: A hidden overlay panel containing the feed of read/unread notifications, sliding in from the right when triggered.
+    \item \textbf{Toast Alerts}: An overlay stack container positioned at the top-right corner to catch and display status updates in real-time.
+\end{itemize}
+
+\subsubsection{2. CSS3 (Design System)}
+Styling is structured across three core files inside the \texttt{css/} directory:
+\begin{itemize}
+    \item \textbf{\texttt{css/index.css}}: Establishes the institutional visual tokens. It defines CSS Custom Properties (variables) for HSL-based colors (deep space blue palette for dark mode), typography (Inter font family), shadows, and viewport resets.
+    \item \textbf{\texttt{css/components.css}}: Houses styles for reusable elements like cards, primary/success/danger buttons, status badges, forms, timeline nodes, and the notification drawer.
+    \item \textbf{\texttt{css/views.css}}: Sets up the layout structure (flex grids) for the dashboard, queue listing, login screens, and the regrading request forms.
+\end{itemize}
+
+\subsubsection{3. JavaScript (ECMAScript 6 Vanilla)}
+All application routing, database management, session authentication, and view rendering are written in pure JavaScript. By design, the project avoids ES Modules (\texttt{import}/\texttt{export}) in favor of modular IIFE namespaces bound to the global \texttt{window} object. This layout allows the app to be loaded directly via \texttt{file://} in browsers that block local module imports.
+
+\subsection{Backend \& Database Simulation}
+\begin{important}
+\textbf{No Java, Node, or Python backend is used for execution logic.} The entire server layer is simulated inside the client's browser.
+\end{important}
+
+\begin{itemize}
+    \item \textbf{Mock Database Layer} (\texttt{js/store.js}): Simulates database tables using key-value storage in \texttt{localStorage}. It handles queries, insertions, status updates, and immutable audit logs.
+    \item \textbf{Session Simulation} (\texttt{js/auth.js}): Simulates login state and role-based permissions using \texttt{sessionStorage}.
+    \item \textbf{HTTP Hosting}: Any basic HTTP daemon (e.g. Python's \texttt{http.server} or Node's \texttt{npx http-server}) can serve the application.
+\end{itemize}
+
+\begin{center}\rule{0.5\linewidth}{0.5pt}\end{center}
+
+\section{Detailed Directory \& File Map}
+
+\begin{longtable}{llp{7cm}}
+\caption{System Directory Map} \\
+\toprule
+\textbf{Path} & \textbf{Type} & \textbf{Technical Responsibility} \\
+\midrule
+\endhead
+\texttt{index.html} & File & Core HTML5 application shell & layout structures. \\
+\texttt{README.md} & File & Developer setup, schema guide, and walkthrough documentation. \\
+\texttt{css/index.css} & File & CSS tokens, dark mode variables, global reset, utility classes. \\
+\texttt{css/components.css} & File & Stylings for buttons, badges, notifications, drawer, and input fields. \\
+\texttt{css/views.css} & File & Viewport grid systems, login views, queue cards, and details layouts. \\
+\texttt{js/app.js} & File & SPA orchestrator, hash-based router, navigation, and notification binding. \\
+\texttt{js/store.js} & File & Database abstraction layer, localStorage wrapper, database CRUD, and seed data. \\
+\texttt{js/auth.js} & File & Active session simulator, role login/logout handling, and route guards. \\
+\texttt{js/audit.js} & File & Immutable append-only audit trail logger helper. \\
+\texttt{js/notifications.js} & File & Notification system utility (in-app drawer rendering and toast stack). \\
+\texttt{js/views/login.js} & File & Renders role picker and user selector layout. \\
+\texttt{js/views/dashboard.js} & File & Renders statistical dashboard metrics for students and instructors. \\
+\texttt{js/views/grade-view.js} & File & Renders student grade list with "Request Regrade" indicators. \\
+\texttt{js/views/request-form.js} & File & Renders new request forms, validations, student detail screens, and reopens. \\
+\texttt{js/views/queue.js} & File & Renders searchable, filterable queue cards for instructors. \\
+\texttt{js/views/review.js} & File & Renders instructor evaluation panels, decision entry forms, and closure actions. \\
+\bottomrule
+\end{longtable}
+
+\begin{center}\rule{0.5\linewidth}{0.5pt}\end{center}
+
+\section{State Machine \& Role Security}
+
+\subsection{Request States}
+The lifecycle of a regrade request is strictly managed in the database column \texttt{status} and follows 5 primary values:
+\begin{enumerate}
+    \item \textbf{\texttt{Submitted}}: A student has submitted a regrade request. The instructor can see it in their queue.
+    \item \textbf{\texttt{Under Review}}: Triggered automatically when an instructor opens the request for the first time.
+    \item \textbf{\texttt{Accepted}}: Grade revised upward by the instructor. The new score is written back to the student's grade record.
+    \item \textbf{\texttt{Rejected}}: Original grade stands.
+    \item \textbf{\texttt{Closed}}: The regrading workflow is finalized, preventing any future actions.
+\end{enumerate}
+
+\subsection{The Reopened UI Flag}
+If an instructor rejects a request, the student has a **one-time dispute (reopen) guard**. 
+Clicking \textbf{Reopen Request}:
+\begin{itemize}
+    \item Increments \texttt{reopenCount} by 1.
+    \item Resets the status back to \textbf{\texttt{Submitted}}.
+    \item Places a permanent `"Reopened"` flag in the UI.
+    \item Blocks further reopens once \texttt{reopenCount >= 1}.
+\end{itemize}
+
+\subsection{Role-Based Navigation Guards}
+Access controls are implemented client-side inside \texttt{js/app.js} and \texttt{js/auth.js}. When routing occurs, \texttt{navigate(path)} performs the following checks:
+\begin{itemize}
+    \item Checks if the user is authenticated via \texttt{LMS.Auth.isAuthenticated()}.
+    \item Restricts student access to instructor-only pages (\texttt{\#/queue}, \texttt{\#/queue/:id}, \texttt{\#/audit}) by redirecting unauthorized attempts back to the student's dashboard.
+    \item Shows/hides navigation tabs in the sidebar depending on the active role.
+\end{itemize}
+
+\begin{center}\rule{0.5\linewidth}{0.5pt}\end{center}
+
+\section{Database Schema \& API Contract}
+
+ReGrade uses 7 distinct localStorage tables to hold application data:
+
+\subsection{1. \texttt{lms\_users}}
+Stores identity, role representation, and avatar labels:
+\begin{lstlisting}[language=json]
+[
+  { "id": "u1", "name": "Anirudh Bhatt", "role": "student", "email": "anirudh@upes.edu", "avatar": "AB" },
+  { "id": "u2", "name": "Himanshu Kadyan", "role": "student", "email": "himanshu@upes.edu", "avatar": "HK" },
+  { "id": "u3", "name": "Yashasvi Dutt Sharma", "role": "student", "email": "yashasvi@upes.edu", "avatar": "YS" },
+  { "id": "u4", "name": "Raygun Jose", "role": "instructor", "email": "raygun.jose@upes.edu", "avatar": "RJ" }
+]
+\end{lstlisting}
+
+\subsection{2. \texttt{lms\_assignments}}
+Stores assignment titles, course labels, and maximum grade score limits:
+\begin{lstlisting}[language=json]
+[
+  {
+    "id": "a1",
+    "title": "Midterm Exam",
+    "description": "Chapters 1--6 comprehensive assessment",
+    "maxScore": 100,
+    "course": "CS301 --- Data Structures",
+    "publishedAt": "2026-05-25T18:00:00.000Z"
+  }
+]
+\end{lstlisting}
+
+\subsection{3. \texttt{lms\_grades}}
+Tracks individual student grade records:
+\begin{lstlisting}[language=json]
+[
+  { "studentId": "u1", "assignmentId": "a1", "score": 72, "maxScore": 100 }
+]
+\end{lstlisting}
+
+\subsection{4. \texttt{lms\_regrade\_requests}}
+Tracks active regrading requests:
+\begin{lstlisting}[language=json]
+{
+  "id": "rr_1780520849373_zgp3y",
+  "studentId": "u1",
+  "assignmentId": "a1",
+  "originalGrade": 72,
+  "claimedGrade": 85,
+  "reason": "calculation_error",
+  "reasonDetail": "Question 3 partial credit was not awarded. I showed all work on page 4.",
+  "evidenceType": "text",
+  "evidence": "Rubric mentions 5 points for the AVL tree AVL rotations.",
+  "status": "Submitted",
+  "submittedAt": "2026-06-03T18:00:00.000Z",
+  "updatedAt": "2026-06-03T18:00:00.000Z",
+  "reopenCount": 0
+}
+\end{lstlisting}
+
+\subsection{5. \texttt{lms\_decisions}}
+Records decisions made by instructors:
+\begin{lstlisting}[language=json]
+{
+  "id": "dec_67890",
+  "requestId": "rr_1780520849373_zgp3y",
+  "instructorId": "u4",
+  "decision": "Accepted",
+  "justification": "I reviewed the work on page 4. Full credit has been awarded.",
+  "revisedGrade": 85,
+  "decidedAt": "2026-06-03T19:00:00.000Z"
+}
+\end{lstlisting}
+
+\subsection{6. \texttt{lms\_audit\_log}}
+Immutable append-only record of state-changing transactions:
+\begin{lstlisting}[language=json]
+{
+  "id": "aud_12345",
+  "requestId": "rr_1780520849373_zgp3y",
+  "actorId": "u1",
+  "actorRole": "student",
+  "action": "SUBMITTED",
+  "fromState": null,
+  "toState": "Submitted",
+  "metadata": {},
+  "timestamp": "2026-06-03T18:00:00.000Z"
+}
+\end{lstlisting}
+
+\subsection{7. \texttt{lms\_notifications}}
+Tracks messages sent to users' drawers:
+\begin{lstlisting}[language=json]
+{
+  "id": "n_12345",
+  "userId": "u1",
+  "type": "success",
+  "message": "Your regrade request for Midterm Exam has been accepted!",
+  "requestId": "rr_1780520849373_zgp3y",
+  "read": false,
+  "createdAt": "2026-06-03T19:00:00.000Z"
+}
+\end{lstlisting}
+
+\begin{center}\rule{0.5\linewidth}{0.5pt}\end{center}
+
+\section{User Interface & Premium Design System}
+
+\subsection{CSS Custom Property Design Tokens}
+ReGrade utilizes a hybrid visual theme combining institutional branding with high-readability content surfaces:
+\begin{itemize}
+    \item \textbf{UPES Background Gradient}: The global canvas background, sidebar, topbar, and login shell use a 135-degree linear gradient transitioning from deep navy-indigo through purple to plum (\texttt{--bg-gradient: linear-gradient(135deg, \#0e1e82 0\%, \#571175 60\%, \#850f5f 100\%)}).
+    \item \textbf{Light Workspace Container}: Upon login, the active workspace (\texttt{.app-workspace}) floats above the gradient background as an elevated white-background sheet container (\texttt{\#ffffff}) with black/slate text (\texttt{\#1e293b}) and soft, premium shadows (\texttt{rgba(0, 0, 0, 0.22)}) for a clean, modern aesthetic.
+    \item \textbf{High-Contrast Status Indicators}: Status badges inside the light workspace dynamically re-map to high-contrast colors (e.g., dark amber for Submitted, dark blue for Under Review, dark green for Accepted, and dark red for Rejected) against soft light-tinted backgrounds for optimal contrast.
+    \item \textbf{Primary Action Buttons}: In order to maintain absolute visibility and focus, core interactive buttons (such as \texttt{.btn-primary}, \texttt{.btn-success}, and \texttt{.btn-danger}) are explicitly configured with high-contrast white text (\texttt{\#ffffff}) on their vivid colored backgrounds, overriding any general light-theme text styles.
+\end{itemize}
+
+\subsection{UI Logo Integration}
+To integrate the landscape \textbf{UPES Logo} (which features dark text and tagline) onto the dark blue shell background:
+\begin{itemize}
+    \item \textbf{White Contrast Shield}: Logo containers in both the sidebar (\texttt{index.html}) and the login card (\texttt{js/views/login.js}) wrap the image inside a clean, solid white container:
+    \begin{lstlisting}[language=html]
+<div style="background: #ffffff; padding: 8px 16px; border-radius: 6px; box-shadow: 0 2px 8px rgba(0,0,0,0.15);">
+  <img src="upes_logo.png" alt="UPES Logo" style="max-height: 38px; max-width: 100%; object-fit: contain;">
+</div>
+    \end{lstlisting}
+    This protects the logo's legibility, ensuring the black text of the brand remains readable.
+\end{itemize}
+
+\begin{center}\rule{0.5\linewidth}{0.5pt}\end{center}
+
+\section{Verification, Testing \& Walkthrough Script}
+
+\subsection{Application Execution}
+Since there is no complex backend compiling code, the project can be served using any local web hosting utility.
+
+\subsubsection{Method A: Python 3 server}
+\begin{lstlisting}[language=bash]
+python3 -m http.server 3456
+\end{lstlisting}
+
+\subsubsection{Method B: Node.js http-server}
+\begin{lstlisting}[language=bash]
+npx http-server -p 3456
+\end{lstlisting}
+
+\subsection{Automated Unit Tests}
+To satisfy the Day 4 testing requirements, a dedicated client-side test suite is integrated:
+\begin{itemize}
+    \item \textbf{File}: \texttt{test.html}
+    \item \textbf{Framework}: A custom, lightweight, browser-based unit testing framework with isolated state setup.
+    \item \textbf{Test Coverage}:
+    \begin{itemize}
+        \item \textbf{Database \& Mock Store}: Validates seed status and user configurations (including UPES emails).
+        \item \textbf{Authentication \& Routing}: Verifies session initialization, logging in, and role-based guards.
+        \item \textbf{Request Validation}: Confirms that valid requests are correctly registered and that duplicate request guards block multiple submissions for the same assignment.
+        \item \textbf{Instructor Evaluation}: Tests status progression (Submitted $\to$ Under Review), decision logging, and gradebook updates.
+        \item \textbf{Reopen Limits}: Enforces the strict single-reopen constraint (allowing exactly one reopen for rejected requests and blocking any subsequent attempts).
+    \end{itemize}
+    \item \textbf{Execution}: Navigate to \url{http://localhost:3456/test.html} to view the live execution metrics.
+\end{itemize}
+
+\subsection{Walkthrough Evaluation Steps}
+Perform the following sequence to verify all features, states, and user names:
+
+\subsubsection{Step 1: Student Login}
+\begin{enumerate}
+    \item Open your browser and navigate to \url{http://localhost:3456}.
+    \item You will see the login page featuring the white-backed \textbf{UPES Logo}.
+    \item Click \textbf{Student} and choose the account **Anirudh Bhatt**.
+    \item Verify that the student's dashboard loads successfully, displaying their course metrics.
+\end{enumerate}
+
+\subsubsection{Step 2: Submit a New Request}
+\begin{enumerate}
+    \item In the sidebar, click \textbf{My Grades}.
+    \item Locate **Final Project** (which currently has no request filed).
+    \item Click \textbf{Request Regrade}.
+    \item On the request form page:
+    \begin{itemize}
+        \item Claimed grade: Enter a value larger than original (e.g. 125).
+        \item Reason: Select "Calculation / Addition Error".
+        \item Explanation: Enter at least 30 characters (e.g. "I scored 118 out of 150 but Question 4 score was not added in my total sheet.").
+        \item Evidence: Paste text details or toggle to link input.
+    \end{itemize}
+    \item Click \textbf{Submit Request}. Observe the confirmation toast and verification timeline.
+\end{enumerate}
+
+\subsubsection{Step 3: Instructor Evaluation}
+\begin{enumerate}
+    \item Click \textbf{Switch Role} at the bottom left.
+    \item Select \textbf{Instructor} and select **Raygun Jose**.
+    \item Navigate to the \textbf{Request Queue} in the sidebar.
+    \item Observe the newly submitted request from **Anirudh Bhatt**.
+    \item Click the card. The status instantly transitions from \textbf{\texttt{Submitted}} to \textbf{\texttt{Under Review}} in the background, logging an entry to the audit trail.
+    \item In the decision panel: select **Accept**, enter revised grade, write a 20+ character justification, and click submit.
+    \item Switch back to student **Anirudh Bhatt** to verify their updated grade, success toast, and timeline notifications.
+\end{enumerate}
+
+\end{document}
