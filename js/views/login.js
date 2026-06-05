@@ -1,5 +1,6 @@
-/* ═══════════════════════════════════════════════════════
+﻿/* ═══════════════════════════════════════════════════════
    views/login.js — Secure Login, Registration, and Google Sign Up
+   Contributor: Himanshu Kadyan (Himanshukdyn)
    ═══════════════════════════════════════════════════════ */
 window.LMS = window.LMS || {};
 window.LMS.Views = window.LMS.Views || {};

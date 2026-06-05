@@ -1,6 +1,7 @@
-/* ═══════════════════════════════════════════════════════
+﻿/* ═══════════════════════════════════════════════════════
    views/review.js — Instructor review panel + decision form
    Day 3: Full review workflow with accept/reject + notifications
+   Contributor: Himanshu Kadyan (Himanshukdyn)
    ═══════════════════════════════════════════════════════ */
 window.LMS = window.LMS || {};
 window.LMS.Views = window.LMS.Views || {};

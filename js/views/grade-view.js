@@ -1,7 +1,8 @@
-/* ═══════════════════════════════════════════════════════
+﻿/* ═══════════════════════════════════════════════════════
    views/grade-view.js — Grade table + Request Regrade CTA
    Day 3: Integration of grade view with regrade workflow
    Day 4 preview: status pill + duplicate guard
+   Contributor: Himanshu Kadyan (Himanshukdyn)
    ═══════════════════════════════════════════════════════ */
 window.LMS = window.LMS || {};
 window.LMS.Views = window.LMS.Views || {};

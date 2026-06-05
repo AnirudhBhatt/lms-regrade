@@ -1,9 +1,10 @@
-/* ═══════════════════════════════════════════════════════
+﻿/* ═══════════════════════════════════════════════════════
    views/request-form.js
    - render()       Student request submission form (Day 3)
    - renderDetail() Student request status + reopen (Day 3)
    - submitForm()   Validation + create + notifications
    - reopenRequest() 1× reopen guard
+   Contributor: Himanshu Kadyan (Himanshukdyn)
    ═══════════════════════════════════════════════════════ */
 window.LMS = window.LMS || {};
 window.LMS.Views = window.LMS.Views || {};

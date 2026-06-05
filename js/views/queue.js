@@ -1,6 +1,7 @@
-/* ═══════════════════════════════════════════════════════
+﻿/* ═══════════════════════════════════════════════════════
    views/queue.js — Instructor request queue + filter chips
    Day 3: Full queue with stats + filterable list
+   Contributor: Himanshu Kadyan (Himanshukdyn)
    ═══════════════════════════════════════════════════════ */
 window.LMS = window.LMS || {};
 window.LMS.Views = window.LMS.Views || {};
